@@ -1,0 +1,3 @@
+*.fasl
+.cl-repository/
+_apalache-out/
