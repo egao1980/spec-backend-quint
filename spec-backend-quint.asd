@@ -3,7 +3,7 @@
   :description "Quint backend for spec-protocol: emit .qnt, drive quint typecheck/run/test/verify/compile"
   :author "egao1980"
   :license "MIT"
-  :depends-on ("spec-protocol" "process-protocol" "json-protocol" "cl-stack-pathlib" "babel")
+  :depends-on ("spec-protocol" "process-protocol" "json-protocol" (:version "cl-stack-pathlib" "0.3.0") "babel")
   :serial t
   :pathname "src"
   :components ((:file "package")
