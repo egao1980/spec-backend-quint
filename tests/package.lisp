@@ -7,10 +7,11 @@
   (asdf:system-relative-pathname "spec-backend-quint" (format nil "tests/fixtures/~a" name)))
 
 (defun fixture-text (name)
+  "Read a fixture as UTF-8. Drop CR so a Windows checkout (CRLF) still matches LF emit."
   (with-open-file (in (fixture name) :external-format :utf-8)
     (let* ((text (make-string (file-length in)))
            (n (read-sequence text in)))
-      (subseq text 0 n))))
+      (remove #\Return (subseq text 0 n)))))
 
 (defmacro with-quint (&body body)
   "Run BODY only when the quint CLI is installed (QUINT_BIN or PATH); otherwise SKIP."
