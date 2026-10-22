@@ -203,6 +203,13 @@
     (setf first nil)
     (%nl stream) (format stream "~a' = ~a" (%decl-ref v) (%decl-ref v))))
 
+(defun %item-must-assign (item items must-assign)
+  "MUST-ASSIGN for ITEM of a conjunction ITEMS: a var a sibling assigns must not be framed again."
+  (let ((siblings (loop for f in items unless (eq f item) collect (assigned-vars f))))
+    (if (member :all siblings)
+        '()
+        (remove-if (lambda (v) (some (lambda (a) (member v a :test #'name=)) siblings)) must-assign))))
+
 (defun emit-action-item (e stream must-assign)
   "Emit one conjunct of an action. MUST-ASSIGN = vars every branch of E has to assign."
   (etypecase e
@@ -238,7 +245,8 @@
                       (remove-if (lambda (v) (member v assigned :test #'name=)) must-assign))))
     (cond ((and (null missing) (not (typep e 'all-expr))) (emit-action-item e stream must-assign))
           (t (emit-all (if (typep e 'all-expr) e (make-instance 'all-expr :forms (list e)))
-                       stream must-assign :extra-frame missing)))))
+                       stream (set-difference must-assign missing :test #'name=)
+                       :extra-frame missing)))))
 
 (defun emit-all (e stream must-assign &key extra-frame)
   (let ((items (block-forms e)))
@@ -248,7 +256,8 @@
           (write-string "all {" stream)
           (with-indent
             (dolist (f items)
-              (%nl stream) (emit-action-item f stream must-assign) (write-string "," stream))
+              (%nl stream) (emit-action-item f stream (%item-must-assign f items must-assign))
+              (write-string "," stream))
             (dolist (v extra-frame)
               (%nl stream) (format stream "~a' = ~a," (%decl-ref v) (%decl-ref v))))
           (%nl stream) (write-string "}" stream)))))
@@ -270,7 +279,9 @@
          (write-string "all {" stream)
          (with-indent
            (dolist (c conjuncts) (%nl stream) (emit-expr c stream) (write-string "," stream))
-           (dolist (f items) (%nl stream) (emit-action-item f stream must-assign) (write-string "," stream))
+           (dolist (f items)
+             (%nl stream) (emit-action-item f stream (%item-must-assign f items must-assign))
+             (write-string "," stream))
            (dolist (v frame) (%nl stream) (format stream "~a' = ~a," (%decl-ref v) (%decl-ref v))))
          (%nl stream) (write-string "}" stream))))))
 
