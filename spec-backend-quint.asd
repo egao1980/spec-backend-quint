@@ -1,5 +1,5 @@
 (defsystem "spec-backend-quint"
-  :version "0.1.0"
+  :version "0.1.1"
   :description "Quint backend for spec-protocol: emit .qnt, drive quint typecheck/run/test/verify/compile"
   :author "egao1980"
   :license "MIT"
