@@ -15,7 +15,11 @@
   (action guarded (:requires (> y 0)) (:guard (< x 10)) (decf y))
   (action sequenced
     (setf z 1)
-    (if (> x 0) (all (setf x 0) (if (> y 0) (setf y 0))) (setf y 1))))
+    (if (> x 0) (all (setf x 0) (if (> y 0) (setf y 0))) (setf y 1)))
+  (action nested-partial
+    (if (> x 0)
+        (all (setf x 0) (if (> y 0) (setf y 0)))
+        (let ((k 1)) (match (if (> k 0) :pos :zero) (:pos (setf z k)) (_ (setf x k)))))))
 
 (defun emitted (name)
   (let ((text (emit-to-string (find-spec 'frame))))
@@ -50,6 +54,14 @@
     (ok (= 1 (count-matches "z' = " text)) "z is assigned by the sibling setf only")
     (ok (= 1 (count-matches "x' = x" text)) "only the else-branch frames x")
     (ok (= 1 (count-matches "y' = y" text)) "only the inner else frames y")))
+
+(deftest frames-added-by-a-branch-are-not-repeated-inside-it
+  (let ((text (emitted "nestedPartial")))
+    ;; then: x set, y framed in the inner else, z framed once by the branch
+    ;; else: y framed once by the branch, each match arm frames the other of x / z
+    (ok (= 2 (count-matches "y' = y" text)))
+    (ok (= 2 (count-matches "z' = z" text)))
+    (ok (= 1 (count-matches "x' = x" text)))))
 
 (deftest requires-and-guards-are-conjuncts
   (let ((text (emitted "guarded")))

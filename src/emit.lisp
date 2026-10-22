@@ -245,7 +245,8 @@
                       (remove-if (lambda (v) (member v assigned :test #'name=)) must-assign))))
     (cond ((and (null missing) (not (typep e 'all-expr))) (emit-action-item e stream must-assign))
           (t (emit-all (if (typep e 'all-expr) e (make-instance 'all-expr :forms (list e)))
-                       stream must-assign :extra-frame missing)))))
+                       stream (set-difference must-assign missing :test #'name=)
+                       :extra-frame missing)))))
 
 (defun emit-all (e stream must-assign &key extra-frame)
   (let ((items (block-forms e)))
